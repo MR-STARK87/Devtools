@@ -716,7 +716,9 @@ if (paired) {
   });
 
   textArea.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    // Enter sends; Shift+Enter inserts a newline. Ignore IME composition so
+    // Enter that only commits a candidate does not fire a send.
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       sendText();
     }
