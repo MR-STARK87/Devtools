@@ -1,0 +1,16 @@
+# Normalize line endings to LF inside the repository; keep the working tree native.
+# Works whether or not core.autocrlf is enabled, so clones stay consistent.
+* text=auto
+
+# Shell scripts must stay LF so Git Bash can execute them.
+*.sh text eol=lf
+
+# Binary files: never apply line-ending conversion.
+# The .jks keystores are load-bearing - a mangled keystore forces an app uninstall
+# to update (the signing key would no longer match the installed APK).
+*.png binary
+*.ico binary
+*.jks binary
+*.apk binary
+*.zip binary
+*.woff2 binary

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Native client for Bucket.
+
+     Why a real app rather than the installed PWA: install-to-home-screen and
+     the web share_target both need a secure context, which a plain-HTTP LAN
+     address is not. Wrapping the same page in a WebView gets both without
+     TLS, and keeps the server's trust model intact because traffic still
+     arrives from the phone's real LAN address rather than from loopback. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bucket"
+    android:versionCode="2"
+    android:versionName="1.1">
+
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="34" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Only for API <= 28: saving to public Downloads predates scoped
+         storage. On API 29+ MediaStore handles it with no permission. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <application
+        android:label="Bucket"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@android:style/Theme.Material.NoActionBar"
+        android:usesCleartextTraffic="true"
+        android:allowBackup="false"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- In-app image viewer: images open here so they never leave Bucket.
+             Everything else is handed to the system's default app (FileOpener
+             stages the bytes and fires ACTION_VIEW through CacheProvider). -->
+        <activity
+            android:name=".ViewerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <!-- Serves staged files to the default app for ACTION_VIEW. Custom
+             provider rather than androidx FileProvider, which the no-Gradle
+             build has no artifact for; only getCacheDir()/shared is exposed. -->
+        <provider
+            android:name=".CacheProvider"
+            android:authorities="com.bucket.cache"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
+        <!-- The share sheet entry. Kept out of recents and transparent so
+             sharing feels like a system action, not an app launch. -->
+        <activity
+            android:name=".ShareActivity"
+            android:exported="true"
+            android:label="Bucket"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

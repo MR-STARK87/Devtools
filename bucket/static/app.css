@@ -1,0 +1,1286 @@
+﻿/* Bucket — Workbench rework
+   A table, not a cloud. Concrete, paper, hazard tape, and a single
+   vermilion signal. The laptop is a workbench; the phone is the other
+   end of a short, private cable. One real risk: the drop zone is a
+   recessed well with perforated steel edges and hazard stripes on drag —
+   noisy on purpose, because dropping is the whole job.
+   Keep GROUND/INK sync with tools/make_icons.py if you change them. */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
+:root{
+  --ground: #EDEFF2;
+  --ground-2: #E2E6EA;
+  --surface: #FFFFFF;
+  --surface-2: #F2F4F7;
+  --surface-3: #E9ECF0;
+  --ink: #0E1013;
+  --muted: #6B7382;
+  --faint: #9AA3B1;
+  --line: #D9DDE3;
+  --line-strong: #B8C0CC;
+  --signal: #FF3B1F;
+  --signal-ink: #FFFFFF;
+  --signal-hover: #E5351B;
+  --hazard: #FFD400;
+  --hazard-ink: #0E1013;
+  --radius-lg: 18px;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shell: 1120px;
+  /* Height of the phone composer bar. It is out of flow (see the ≤880px
+     block), so the feed and the toast have to reserve its height themselves.
+     Not a constant — the textarea is user-resizable and web fonts land late —
+     so app.js measures the real bar and overwrites this. The value here is
+     only the pre-JS / JS-failed fallback. */
+  --composer-h: 186px;
+  --font: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scrollbar-gutter:stable}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(14,16,19,0.055) 1.25px, transparent 0) 0 0 / 18px 18px,
+    var(--ground);
+  color:var(--ink);
+  font:14px/1.5 var(--font);
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+  height:100vh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+::selection{background:var(--ink);color:var(--surface)}
+[hidden]{display:none !important}
+button{font:inherit}
+a{color:inherit}
+.strip{
+  flex:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:calc(10px + env(safe-area-inset-top)) 20px 10px;
+  background:rgba(255,255,255,0.92);
+  border-bottom:1px solid var(--line);
+  backdrop-filter: blur(12px) saturate(1.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.05);
+  position:sticky;
+  top:0;
+  z-index:30;
+}
+.strip__left{display:flex;align-items:center;gap:14px;min-width:0}
+.strip__right{display:flex;align-items:center;gap:12px}
+.mark{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+.mark__glyph{
+  width:28px;height:28px;
+  border-radius:8px;
+  background:var(--ink);
+  color:var(--surface);
+  font:700 15px/1 var(--font);
+  display:grid;place-items:center;
+  letter-spacing:-0.02em;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+  flex:none;
+}
+.mark__word{
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-0.03em;
+  line-height:1;
+}
+.mark__sub{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  font-weight:500;
+  letter-spacing:0.09em;
+  text-transform:uppercase;
+  color:var(--muted);
+  border-left:1px solid var(--line);
+  padding-left:12px;
+  margin-left:2px;
+  white-space:nowrap;
+}
+.mark__sub::before{
+  content:"";
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--signal);
+  display:inline-block;
+  box-shadow:0 0 0 4px rgba(255,59,31,0.12);
+}
+@media (max-width:720px){
+  .mark__sub{display:none}
+}
+.conn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  font-weight:500;
+  letter-spacing:0.04em;
+  text-transform:uppercase;
+  color:var(--muted);
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  padding:6px 10px 6px 8px;
+  border-radius:999px;
+  white-space:nowrap;
+}
+.conn i{
+  width:9px;height:9px;
+  border-radius:50%;
+  background:transparent;
+  border:1.5px solid var(--faint);
+  display:inline-block;
+  flex:none;
+}
+.conn[data-state="live"]{
+  color:var(--ink);
+  border-color:rgba(255,59,31,0.28);
+  background:rgba(255,59,31,0.08);
+}
+.conn[data-state="live"] i{
+  background:var(--signal);
+  border-color:var(--signal);
+  box-shadow:0 0 0 6px rgba(255,59,31,0.14);
+  animation:pulse 2.2s ease-out infinite;
+}
+.conn[data-state="lost"]{
+  color:var(--muted);
+  background:var(--surface-2);
+}
+.conn[data-state="lost"] i{
+  border-color:var(--line-strong);
+  background:var(--surface-3);
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(255,59,31,0.32)}
+  70%{box-shadow:0 0 0 8px rgba(255,59,31,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,59,31,0)}
+}
+.stack{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  width:100%;
+  padding:0 0 calc(18px + env(safe-area-inset-bottom));
+}
+.stack::-webkit-scrollbar{width:10px;height:10px}
+.stack::-webkit-scrollbar-thumb{background:#C4CAD3;border-radius:999px;border:2px solid var(--ground)}
+.stack::-webkit-scrollbar-track{background:transparent}
+.layout{
+  width:100%;
+  max-width:var(--shell);
+  margin:0 auto;
+  padding:18px 18px 24px;
+  display:grid;
+  grid-template-columns: 360px minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+}
+@media (max-width: 880px){
+  .layout{
+    grid-template-columns: 1fr;
+    padding:12px 12px 0;
+    gap:14px;
+  }
+}
+.composer{
+  position:sticky;
+  top:18px;
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  padding:14px 14px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-shadow:
+    0 1px 2px rgba(14,16,19,0.04),
+    0 8px 24px rgba(14,16,19,0.06),
+    0 24px 48px rgba(14,16,19,0.04);
+  z-index:5;
+}
+.composer::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  padding:1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(0,0,0,0.04));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events:none;
+  opacity:0.7;
+}
+.composer__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.composer__eyebrow{
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+}
+.composer__eyebrow i{
+  width:28px;height:1px;background:var(--line-strong);display:inline-block;
+}
+.composer__meta{
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  color:var(--faint);
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  padding:3px 8px;
+  border-radius:999px;
+}
+.composer__row{
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+}
+.composer textarea{
+  flex:1;
+  min-width:0;
+  border:1.5px solid var(--line);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(14,16,19,0.045) 1px, transparent 0) 0 0 / 16px 16px,
+    var(--surface-2);
+  color:var(--ink);
+  caret-color:var(--signal);
+  font:14.5px/1.55 var(--font);
+  resize:vertical;
+  min-height:118px;
+  max-height:240px;
+  padding:12px 12px;
+  border-radius:12px;
+  outline:none;
+  box-shadow: inset 0 1px 1px rgba(14,16,19,0.04), inset 0  6px 16px rgba(14,16,19,0.04);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.composer textarea::placeholder{color:var(--faint)}
+.composer textarea:focus{
+  border-color: rgba(255,59,31,0.38);
+  box-shadow:
+    inset 0 1px 1px rgba(14,16,19,0.04),
+    inset 0 6px 16px rgba(14,16,19,0.04),
+    0 0 0 4px rgba(255,59,31,0.10);
+  background-color:#fff;
+}
+.send{
+  flex:none;
+  width:46px;height:46px;
+  border:0;
+  border-radius:50%;
+  background:var(--signal);
+  color:var(--signal-ink);
+  font-size:18px;
+  font-weight:700;
+  cursor:pointer;
+  display:grid;place-items:center;
+  box-shadow: 0 2px 8px rgba(255,59,31,0.28), 0 1px 2px rgba(0,0,0,0.12);
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+.send:hover{background:var(--signal-hover); transform:translateY(-1px); box-shadow:0 6px 18px rgba(255,59,31,0.28)}
+.send:active{transform:scale(0.96)}
+.composer__foot{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.composer__hint{
+  margin-left:auto;
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--faint);
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  padding:4px 8px;
+  border-radius:999px;
+  letter-spacing:0.01em;
+}
+@media (max-width: 880px){
+  /* The phone bar itself is styled once, at the bottom of this file, on
+     `.rail .composer` — that selector outranks a bare `.composer`, so putting
+     positioning here would be dead code that looks authoritative. Only the
+     rules that nothing else overrides live here. */
+  .composer textarea{min-height:84px}
+  .composer__hint{display:none}
+}
+body.dragging .composer{
+  border-color:var(--hazard);
+  box-shadow: 0 0 0 3px rgba(255,212,0,0.22), 0 12px 32px rgba(0,0,0,0.10);
+}
+body.dragging .composer textarea{
+  border-color:var(--hazard);
+  border-style:dashed;
+  border-width:1.5px;
+  background:
+    repeating-linear-gradient(-45deg, rgba(255,212,0,0.09) 0 10px, transparent 10px 20px),
+    var(--surface-2);
+}
+.feed{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.listhead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 14px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:999px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.listhead__title{
+  margin:0;
+  font-size:13px;
+  font-weight:600;
+  letter-spacing:-0.01em;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+.listhead__title::before{
+  content:"";
+  width:8px;height:8px;
+  border-radius:2px;
+  background:var(--ink);
+  display:inline-block;
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.9);
+}
+.listhead__sub{
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--faint);
+}
+.items{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.item{
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:var(--surface);
+  padding:14px 14px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-shadow: 0 1px 2px rgba(14,16,19,0.04);
+  transition: border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
+  position:relative;
+  overflow:hidden;
+}
+.item::after{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:3px;
+  background:var(--line);
+  opacity:0.9;
+}
+.item[data-origin="pc"]::after{background:var(--ink)}
+.item[data-origin="phone"]::after{background:var(--signal)}
+.item:hover{
+  border-color:var(--line-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(14,16,19,0.06);
+}
+.item--new{animation:rise 420ms cubic-bezier(0.2,0.8,0.2,1)}
+@keyframes rise{
+  from{opacity:0;transform:translateY(8px) scale(0.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.item__meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--muted);
+  padding-left:8px;
+}
+.item__dot{color:var(--line-strong)}
+.chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:3px 9px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  font-size:10.5px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  font-weight:600;
+  color:var(--muted);
+  background:var(--surface-2);
+  line-height:1;
+}
+.chip::before{
+  content:"";
+  width:6px;height:6px;
+  border-radius:50%;
+  background:currentColor;
+  opacity:0.9;
+}
+.item__kind{
+  background:var(--ink);
+  border-color:var(--ink);
+  color:var(--surface);
+}
+.item__kind::before{display:none}
+.item__origin{
+  margin-left:auto;
+  background:var(--surface);
+}
+.item[data-origin="pc"] .item__origin{border-color:var(--ink);color:var(--ink)}
+.item[data-origin="phone"] .item__origin{border-color:rgba(255,59,31,0.22);color:var(--signal);background:rgba(255,59,31,0.07)}
+.item__body{min-width:0;padding-left:2px}
+.item__body pre{
+  margin:0;
+  font:13px/1.6 var(--font-mono);
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  max-height:260px;
+  overflow:auto;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  padding:11px 12px;
+  color:#1A1E22;
+}
+.item__body pre::-webkit-scrollbar{height:8px;width:8px}
+.item__body pre::-webkit-scrollbar-thumb{background:#C8CFD8;border-radius:999px}
+.item__body img{
+  display:block;
+  width:100%;
+  max-height:360px;
+  object-fit:contain;
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  background:var(--surface-2);
+}
+.item__file{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:var(--font-mono);
+  font-size:13.5px;
+  overflow-wrap:anywhere;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  padding:10px 12px;
+}
+.item__file::before{
+  content:"◤";
+  flex:none;
+  color:var(--faint);
+  font-size:18px;
+  width:32px;height:32px;
+  display:grid;place-items:center;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:8px;
+}
+.item__more{
+  margin:8px 0 0;
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  color:var(--muted);
+  background:rgba(255,212,0,0.14);
+  border:1px dashed rgba(0,0,0,0.10);
+  padding:6px 8px;
+  border-radius:8px;
+}
+.item__acts{display:flex;gap:6px;flex-wrap:wrap;padding-left:2px}
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--surface);
+  color:var(--ink);
+  font-size:13px;
+  font-weight:600;
+  text-decoration:none;
+  cursor:pointer;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 120ms ease, box-shadow 140ms ease;
+  font-family:var(--font);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+}
+.btn:hover{background:var(--surface-2);border-color:var(--line-strong);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn--solid{
+  background:var(--ink);
+  border-color:var(--ink);
+  color:var(--surface);
+  box-shadow: 0 2px 10px rgba(14,16,19,0.12);
+}
+.btn--solid:hover{background:#1C2024;border-color:#1C2024}
+.btn--quiet{
+  color:var(--muted);
+  border-color:transparent;
+  background:transparent;
+  box-shadow:none;
+}
+.btn--quiet:hover{color:var(--ink);background:var(--surface-2);border-color:var(--line)}
+.btn--sm{font-size:12px;min-height:36px;padding:0 12px;font-weight:600}
+@media (pointer: fine){
+  .btn--sm{min-height:32px;padding:0 11px}
+}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.empty{
+  margin:10px 0 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  text-align:center;
+  color:var(--muted);
+  background:var(--surface);
+  border:1.5px dashed var(--line);
+  border-radius:var(--radius-lg);
+  padding:36px 20px;
+}
+.empty__art{
+  width:72px;height:72px;
+  margin-bottom:8px;
+  fill:none;
+  stroke:var(--line-strong);
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  stroke-width:2.2;
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px;
+}
+.empty__title{margin:0;font-size:15px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
+.empty__sub{margin:0;font-size:13.5px;max-width:38ch;line-height:1.5;color:var(--muted)}
+.empty__hint{
+  margin-top:10px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--faint);
+  border:1px solid var(--line);
+  background:var(--surface-2);
+  padding:6px 10px;
+  border-radius:999px;
+}
+.stack--gate{
+  display:grid;
+  place-items:center;
+  padding:18px;
+}
+.gate{
+  width:min(100%, 460px);
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--surface);
+  padding:28px 26px 22px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 16px 40px rgba(14,16,19,0.08);
+  position:relative;
+  overflow:hidden;
+}
+.gate::before{
+  content:"";
+  position:absolute;
+  left:0;right:0;top:0;
+  height:4px;
+  background: repeating-linear-gradient(90deg, var(--hazard) 0 14px, var(--ink) 14px 28px);
+}
+.gate__eyebrow{
+  margin:0;
+  font-family:var(--font-mono);
+  font-size:10.5px;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.gate__eyebrow::before{
+  content:"";
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--signal);
+  box-shadow:0 0 0 6px rgba(255,59,31,0.12);
+}
+.gate__title{
+  margin:0;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-0.03em;
+  line-height:0.95;
+}
+.gate__body{margin:0 0 6px;color:var(--muted);line-height:1.55}
+.gate__form{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.gate input{
+  font-family:var(--font-mono);
+  font-size:22px;
+  letter-spacing:0.34em;
+  width:7em;
+  padding:12px 14px;
+  border:1.5px solid var(--line);
+  border-radius:12px;
+  background:var(--surface-2);
+  color:var(--ink);
+  caret-color:var(--signal);
+  outline:none;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.03);
+  transition:border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+.gate input:focus{
+  border-color:rgba(255,59,31,0.36);
+  background:var(--surface);
+  box-shadow:0 0 0 4px rgba(255,59,31,0.10), inset 0 1px 1px rgba(0,0,0,0.03);
+}
+.gate input::placeholder{color:var(--faint)}
+.gate__error{
+  margin:0;
+  font-family:var(--font-mono);
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--signal);
+  background:rgba(255,59,31,0.08);
+  border:1px solid rgba(255,59,31,0.18);
+  padding:8px 10px;
+  border-radius:10px;
+}
+body.dragging::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:89;
+  background:rgba(237,239,242,0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events:none;
+}
+body.dragging::before{
+  content:"Drop to send \2014 release anywhere";
+  position:fixed;
+  inset:14px;
+  z-index:90;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-0.01em;
+  color:var(--ink);
+  background:
+    repeating-linear-gradient(-45deg, var(--hazard) 0 14px, #0E1013 14px 28px) top / 100% 6px no-repeat,
+    repeating-linear-gradient(-45deg, var(--hazard) 0 14px, #0E1013 14px 28px) bottom / 100% 6px no-repeat,
+    repeating-linear-gradient(45deg, transparent 0 12px, rgba(255,212,0,0.10) 12px 24px),
+    var(--surface);
+  border:2px solid var(--ink);
+  border-radius:22px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.14);
+  pointer-events:none;
+  text-align:center;
+  padding:24px;
+}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:calc(18px + env(safe-area-inset-bottom));
+  transform:translate(-50%, 16px) scale(0.98);
+  opacity:0;
+  visibility:hidden;
+  background:var(--ink);
+  color:var(--surface);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:999px;
+  padding:10px 16px;
+  font-size:13px;
+  font-weight:600;
+  box-shadow: 0 10px 34px rgba(14,16,19,0.22), 0 2px 8px rgba(0,0,0,0.12);
+  transition: transform 200ms cubic-bezier(0.2,0.9,0.3,1), opacity 160ms ease, visibility 0s linear 200ms;
+  z-index:60;
+  max-width:calc(100vw - 32px);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.toast::before{
+  content:"";
+  width:7px;height:7px;
+  border-radius:50%;
+  background:var(--signal);
+  display:inline-block;
+  flex:none;
+}
+.toast[data-show="1"]{
+  transform:translate(-50%, 0) scale(1);
+  opacity:1;
+  visibility:visible;
+  transition: transform 220ms cubic-bezier(0.2,0.9,0.3,1), opacity 160ms ease, visibility 0s;
+}
+@media (max-width: 880px){
+  /* Sit above the composer bar. --composer-h is the bar's full rendered
+     height and the bar is flush at bottom:0, so its own safe-area padding is
+     already inside that figure — adding env() again would double-count. */
+  .toast{bottom:calc(var(--composer-h) + 12px)}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:0.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.001ms !important;
+  }
+}
+/* --- confirm dialog — workbench card, replaces window.confirm --------- */
+/* Not <dialog>: old WebViews (minSdk 24 phones) do not all support it, and
+   the [hidden]{display:none} pattern already used everywhere works fine. */
+.veil{
+  position:fixed;
+  inset:0;
+  z-index:70; /* above the toast */
+  display:grid;
+  place-items:center;
+  background:rgba(14,16,19,0.30);
+  padding:16px;
+}
+.dialog{
+  width:min(360px, 100%);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  box-shadow: 0 24px 64px rgba(14,16,19,0.24), 0 4px 16px rgba(0,0,0,0.12);
+  overflow:hidden;
+  animation:dialog-in 180ms cubic-bezier(0.2,0.9,0.3,1);
+}
+@keyframes dialog-in{
+  from{transform:translateY(8px) scale(0.97);opacity:0}
+  to{transform:none;opacity:1}
+}
+.dialog__stripe{
+  height:6px;
+  /* Same hazard tape as the drag overlay — destructive actions get the
+     same warning language everywhere in the app. */
+  background:repeating-linear-gradient(90deg, var(--hazard) 0 14px, var(--ink) 14px 28px);
+}
+.dialog__body{
+  padding:20px 22px 6px;
+}
+.dialog__title{
+  margin:0;
+  font-size:19px;
+  font-weight:700;
+  letter-spacing:-0.01em;
+  color:var(--ink);
+}
+.dialog__text{
+  margin:8px 0 0;
+  font-size:13.5px;
+  line-height:1.55;
+  color:var(--muted);
+}
+.dialog__acts{
+  display:flex;
+  gap:10px;
+  padding:18px 22px 20px;
+}
+.dialog__acts .btn{flex:1}
+.btn--danger{
+  border-color:var(--signal);
+  background:var(--signal);
+  color:var(--signal-ink);
+}
+.btn--danger:hover{background:var(--signal-hover);border-color:var(--signal-hover)}
+
+/* --- multi-file batch choice ---------------------------------------- */
+/* The Ask/Zip/Separate switch lives in the composer so both the PC page
+   and the phone WebView see (and flip) the same server-side setting. */
+.composer__batch{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px dashed var(--line);
+}
+.composer__batch-label{
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--faint);
+  margin-right:auto;
+}
+.seg{
+  font-family:var(--font-mono);
+  font-size:11px;
+  font-weight:600;
+  min-height:30px;
+  padding:0 10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:var(--surface-2);
+  color:var(--muted);
+  cursor:pointer;
+}
+.seg:hover{border-color:var(--line-strong);color:var(--ink)}
+.seg[aria-pressed="true"]{
+  background:var(--ink);
+  border-color:var(--ink);
+  color:var(--surface);
+}
+/* The batch dialog needs three full-width actions; the row layout used by
+   the confirm card would squeeze "Send separately" unreadably narrow. */
+.dialog__acts--stack{flex-direction:column}
+.dialog__acts--stack .btn{flex:none;width:100%}
+.dialog__remember{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
+  font-size:13px;
+  color:var(--muted);
+  cursor:pointer;
+  user-select:none;
+}
+.dialog__remember input{
+  width:16px;
+  height:16px;
+  accent-color:var(--ink);
+}
+
+/* --- empty mascot — Bucky the bucket -------------------------------- */
+.empty{
+  padding: 26px 20px 28px;
+  gap: 8px;
+}
+.empty__mascot-wrap{
+  width: 220px;
+  height: 165px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+  position: relative;
+}
+.empty__mascot{
+  width: 220px;
+  height: 165px;
+  display: block;
+  overflow: visible;
+}
+/* float the whole bucket gently, like it is waiting on the bench */
+.mascot__bucket{
+  animation: mascotFloat 3.2s ease-in-out infinite;
+  transform-origin: 100px 90px;
+}
+.mascot__paper-wrap{
+  animation: paperFloat 3.4s ease-in-out infinite;
+  transform-origin: 156px 41px;
+}
+.mascot__paper{ /* inner paper keeps its rotate, wrapper does the float */ }
+.mascot__eye{
+  transform-origin: 100px 86px;
+  animation: mascotBlink 5.2s ease-in-out infinite;
+}
+.mascot__eye:nth-child(2){ animation-delay: 0.08s; }
+.mascot__sparkles{ animation: sparklePop 2.6s ease-in-out infinite alternate; }
+.mascot__sparkles--alt{ animation-delay: 0.9s; animation-duration: 2.9s; }
+.mascot__shadow{ animation: shadowPulse 3.2s ease-in-out infinite; transform-origin: 100px 140px; }
+.mascot__mouth{ animation: mouthWiggle 4.8s ease-in-out infinite; transform-origin: 100px 109px; }
+
+@keyframes mascotFloat{
+  0%,100%{ transform: translateY(0); }
+  50%{ transform: translateY(-4px); }
+}
+@keyframes paperFloat{
+  0%,100%{ transform: translateY(0) rotate(0deg); }
+  50%{ transform: translateY(-5px) rotate(0.6deg); }
+}
+@keyframes mascotBlink{
+  0%, 92%, 100%{ transform: scaleY(1); }
+  94%, 96%{ transform: scaleY(0.08); }
+}
+@keyframes sparklePop{
+  0%{ transform: translateY(0) scale(1); opacity: 0.95; }
+  100%{ transform: translateY(-2px) scale(1.06); opacity: 1; }
+}
+@keyframes shadowPulse{
+  0%,100%{ transform: scaleX(1); opacity: 0.07; }
+  50%{ transform: scaleX(0.88); opacity: 0.045; }
+}
+@keyframes mouthWiggle{
+  0%, 90%, 100%{ transform: scaleX(1); }
+  92%{ transform: scaleX(1.08); }
+  94%{ transform: scaleX(0.96); }
+}
+
+@media (max-width: 880px){
+  .empty__mascot-wrap{ width: 190px; height: 142px; }
+  .empty__mascot{ width: 190px; height: 142px; }
+  .empty{ padding: 22px 16px 24px; }
+}
+
+/* keep the old icon class harmless if ever reused */
+.empty__art{ display:none; }
+/* --- rail — persistent Bucky below well ------------------------------ */
+.rail{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: sticky;
+  top: 18px;
+  align-self: start;
+}
+.rail .composer{
+  position: relative;
+  top: auto;
+  bottom: auto;
+  order: unset;
+  margin: 0;
+}
+.rail__card{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 2px rgba(14,16,19,0.04), 0 8px 24px rgba(14,16,19,0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.rail__mascot{
+  padding: 12px 14px 14px;
+}
+.rail__mascot-art{
+  width: 200px;
+  height: 150px;
+  display: block;
+  overflow: visible;
+  flex: none;
+}
+.rail__copy{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.rail__title{
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.rail__sub{
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 28ch;
+}
+.rail__meta{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-top: 2px;
+}
+.rail__dot{
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  display: inline-block;
+  box-shadow: 0 0 0 4px rgba(255,59,31,0.12);
+  flex: none;
+}
+
+/* --- rail — server ops: pair-a-phone code + stop server ------------ */
+/* Local-only card (rendered only for the machine itself, see index.html).
+   With the headless launcher there is no terminal to read the pairing code
+   from or Ctrl+C out of, so this card carries both. */
+.rail__ops{
+  padding: 13px 14px 12px;
+}
+.ops{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.ops__eyebrow{
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.ops__eyebrow i{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 0 4px rgba(255,59,31,0.12);
+  display: inline-block;
+}
+.ops__code{
+  margin: 8px 0 3px;
+  font-family: var(--font-mono);
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  padding-left: 0.22em; /* balance the trailing letter-space for centering */
+  color: var(--ink);
+}
+.ops__meta{
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  color: var(--faint);
+}
+.ops__stop{
+  margin-top: 11px;
+}
+
+/* empty without mascot — keep it light */
+.empty{
+  padding: 26px 20px 22px;
+}
+.empty__title{ margin: 0; font-size: 14px; }
+.empty__sub{ font-size: 13px; }
+.empty__mascot-wrap,
+.empty__mascot{ display: none !important; }
+
+@media (max-width: 880px){
+  .rail{
+    position: static;
+    top: auto;
+    gap: 0;
+    order: 2;
+  }
+  .feed{ order: 1; }
+  .layout{
+    display: flex;
+    flex-direction: column;
+    /* The bar is out of flow, so nothing below the last item accounts for it.
+       Without this reserve the newest items sit permanently underneath it. */
+    padding-bottom: var(--composer-h);
+  }
+  /* Fixed, not sticky — and this is load-bearing.
+     Sticky clamps an element to its containing block, which here is `.rail`:
+     a shrink-to-fit box the same height as the composer, sitting *after*
+     `.feed` in the column. So sticky had no slack to slide in AND started
+     below the whole list — with a long feed you had to scroll to the very
+     bottom to reach the input. No amount of sticky fixes that; the bar has to
+     leave the scroll flow to pin to the viewport.
+     Two preconditions, both checked: no ancestor (`.rail`, `.layout`,
+     `.stack`, `body`) establishes a containing block for fixed positioning —
+     `overflow:auto` on `.stack` does not — and the Android client declares
+     windowSoftInputMode="adjustResize", so the WebView shrinks on keyboard
+     open and the bar rides above it rather than being covered. */
+  .rail .composer{
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    margin: 0;
+    /* Above feed content, below the toast (60) and the drag overlay (89/90). */
+    z-index: 40;
+    border-radius: 18px 18px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    box-shadow: 0 -10px 40px rgba(14,16,19,0.12);
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .rail__mascot{ display: none; }
+}
+
+/* --- image viewer — same-app window, no navigation -------------------- */
+/* Thumbnails are buttons now (see app.js): the feed image itself is the
+   affordance, with a zoom cursor so it reads as openable. Anything that is
+   not an image keeps the plain Save/Open anchors, which fall through to the
+   browser — or, inside the Android app, to the system's default viewer via
+   the native bridge (see MainActivity). */
+.item__thumb{
+  display:block;
+  width:100%;
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:var(--radius-sm);
+  background:var(--surface-2);
+  cursor:zoom-in;
+  overflow:hidden;
+}
+.item__thumb:hover{border-color:var(--line-strong)}
+.item__thumb img{
+  display:block;
+  width:100%;
+  max-height:360px;
+  object-fit:contain;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+.viewer{
+  position:fixed;
+  inset:0;
+  z-index:80; /* above dialogs (70), below drag overlay (89/90) */
+  display:grid;
+  place-items:center;
+  padding:18px;
+}
+.viewer__scrim{
+  position:absolute;
+  inset:0;
+  background:rgba(14,16,19,0.72);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.viewer__frame{
+  position:relative;
+  margin:0;
+  width:min(960px, 100%);
+  max-height:calc(100vh - 36px);
+  max-height:calc(100dvh - 36px);
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  box-shadow:0 24px 64px rgba(0,0,0,0.30), 0 4px 16px rgba(0,0,0,0.14);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  animation:viewer-in 180ms cubic-bezier(0.2,0.9,0.3,1);
+}
+@keyframes viewer-in{
+  from{transform:translateY(8px) scale(0.98);opacity:0}
+  to{transform:none;opacity:1}
+}
+.viewer__bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+}
+.viewer__name{
+  font-family:var(--font-mono);
+  font-size:12.5px;
+  font-weight:600;
+  overflow-wrap:anywhere;
+  min-width:0;
+  max-width:38ch;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.viewer__count{
+  font-family:var(--font-mono);
+  font-size:11px;
+  color:var(--faint);
+  white-space:nowrap;
+}
+.viewer__spacer{flex:1}
+.viewer__stage{
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle at 1px 1px, rgba(14,16,19,0.055) 1.25px, transparent 0) 0 0 / 18px 18px,
+    var(--surface-2);
+  min-height:220px;
+  max-height:calc(100vh - 220px);
+  max-height:calc(100dvh - 220px);
+  overflow:auto;
+}
+.viewer__stage img{
+  display:block;
+  width:100%;
+  height:100%;
+  max-height:inherit;
+  object-fit:contain;
+  background:transparent;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.viewer__stage[data-loading="1"]{position:relative}
+.viewer__stage[data-loading="1"]::after{
+  content:"";
+  position:absolute;
+  width:26px;height:26px;
+  border-radius:50%;
+  border:3px solid var(--line);
+  border-top-color:var(--signal);
+  animation:viewer-spin 700ms linear infinite;
+}
+@keyframes viewer-spin{to{transform:rotate(360deg)}}
+.viewer__cap{
+  margin:0;
+  padding:8px 14px 12px;
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  color:var(--muted);
+  border-top:1px solid var(--line);
+  background:var(--surface);
+  overflow-wrap:anywhere;
+}
+@media (max-width:720px){
+  .viewer{padding:10px}
+  .viewer__frame{width:100%}
+  .viewer__name{max-width:20ch}
+  .viewer__bar{gap:6px}
+}

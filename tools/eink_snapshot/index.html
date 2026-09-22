@@ -1,0 +1,190 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-paired="{{ 'yes' if paired else 'no' }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EDEFF2">
+<title>Bucket — Local drop</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icon-192.png">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<header class="strip">
+  <div class="strip__left">
+    <span class="mark"><i class="mark__glyph" aria-hidden="true">B</i><span class="mark__word">bucket</span><span class="mark__sub">Local drop · LAN only</span></span>
+  </div>
+  <div class="strip__right">
+    <span class="conn" id="conn" data-state="idle">
+      <i aria-hidden="true"></i><span id="connLabel">offline</span>
+    </span>
+  </div>
+</header>
+
+{% if paired %}
+<main class="stack">
+  <div class="layout">
+
+    <aside class="rail" aria-label="Drop and Bucky">
+      <section class="composer" id="drop" aria-label="Add to bucket">
+        <div class="composer__head">
+          <span class="composer__eyebrow"><i aria-hidden="true"></i> Drop well</span>
+          <span class="composer__meta">Ctrl+Enter to send</span>
+        </div>
+        <div class="composer__row">
+          <textarea id="text" rows="3" placeholder="Type, paste, or drop here…"
+                    aria-label="Text to send"></textarea>
+          <button class="send" id="send" type="button" aria-label="Send text">↑</button>
+        </div>
+        <div class="composer__foot">
+          <button class="btn" id="pick" type="button">Attach files</button>
+          <input type="file" id="file" multiple hidden>
+          <span class="composer__hint">paste or drop anywhere · Win+Shift+S → Ctrl+V</span>
+        </div>
+      </section>
+
+      <div class="rail__card rail__mascot" aria-hidden="true">
+        <svg class="rail__mascot-art" viewBox="0 0 200 150" width="200" height="150" role="img" aria-hidden="true">
+          <ellipse class="mascot__shadow" cx="100" cy="140" rx="42" ry="7" fill="#0E1013" opacity="0.07"/>
+          <g class="mascot__bucket">
+            <path d="M 52 52 H 148 L 140 122 C 140 132 128 142 100 142 C 72 142 60 132 60 122 Z" fill="#FFFFFF" stroke="#0E1013" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>
+            <rect x="46" y="42" width="108" height="16" rx="7" ry="7" fill="#FFFFFF" stroke="#0E1013" stroke-width="2.8"/>
+            <ellipse cx="100" cy="50" rx="47" ry="6.5" fill="#F2F4F7" stroke="#0E1013" stroke-width="2.2"/>
+            <g clip-path="url(#mascotBucketClip2)">
+              <rect x="60" y="112" width="80" height="10" fill="#FFD400"/>
+              <g stroke="#0E1013" stroke-width="1.7">
+                <path d="M64 112 L74 122"/><path d="M80 112 L90 122"/><path d="M96 112 L106 122"/><path d="M112 112 L122 122"/><path d="M128 112 L138 122"/>
+              </g>
+              <rect x="60" y="112" width="80" height="10" fill="none" stroke="#0E1013" stroke-width="1.3"/>
+            </g>
+            <defs><clipPath id="mascotBucketClip2"><path d="M 52 52 H 148 L 140 122 C 140 132 128 142 100 142 C 72 142 60 132 60 122 Z"/></clipPath></defs>
+            <g class="mascot__face">
+              <g class="mascot__eyes">
+                <g class="mascot__eye">
+                  <circle cx="83" cy="86" r="9.2" fill="#0E1013"/>
+                  <circle cx="85.6" cy="83.2" r="2.7" fill="white"/>
+                  <circle cx="84" cy="87.8" r="1" fill="white" opacity="0.7"/>
+                </g>
+                <g class="mascot__eye">
+                  <circle cx="117" cy="86" r="9.2" fill="#0E1013"/>
+                  <circle cx="119.6" cy="83.2" r="2.7" fill="white"/>
+                  <circle cx="118" cy="87.8" r="1" fill="white" opacity="0.7"/>
+                </g>
+              </g>
+              <circle cx="66" cy="98" r="5.5" fill="#FF3B1F" opacity="0.13"/>
+              <circle cx="134" cy="98" r="5.5" fill="#FF3B1F" opacity="0.13"/>
+              <path class="mascot__mouth" d="M93 106 Q100 112 107 106" stroke="#0E1013" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+            </g>
+            <path d="M60 92 C46 94 39 100 48 106" fill="none" stroke="#0E1013" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M140 92 C154 94 161 100 152 106" fill="none" stroke="#0E1013" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="48" cy="106" r="2.2" fill="#0E1013"/>
+            <circle cx="152" cy="106" r="2.2" fill="#0E1013"/>
+          </g>
+          <g class="mascot__paper-wrap">
+            <g class="mascot__paper" transform="rotate(11 156 41)">
+              <rect x="138" y="18" width="36" height="46" rx="4.5" fill="white" stroke="#0E1013" stroke-width="2.2"/>
+              <path d="M157 18 L166 27 L157 27 Z" fill="#E9ECF0" stroke="#0E1013" stroke-width="1.6"/>
+              <g stroke="#D9DDE3" stroke-width="1.7" stroke-linecap="round">
+                <path d="M145 32 L163 32"/><path d="M145 38 L163 38"/><path d="M145 44 L158 44"/>
+              </g>
+              <circle cx="163" cy="19" r="3" fill="#FF3B1F" stroke="#0E1013" stroke-width="1.2"/>
+            </g>
+          </g>
+          <g class="mascot__sparkles" fill="#FF3B1F">
+            <circle cx="34" cy="36" r="2.1" opacity="0.95"/><circle cx="170" cy="62" r="1.7" opacity="0.75"/><circle cx="28" cy="74" r="1.3" opacity="0.6"/>
+          </g>
+          <g class="mascot__sparkles mascot__sparkles--alt" fill="#FFD400">
+            <circle cx="172" cy="34" r="1.8" opacity="0.95"/><circle cx="30" cy="60" r="1.2" opacity="0.7"/>
+          </g>
+        </svg>
+        <div class="rail__copy">
+          <p class="rail__title">Bucky’s on watch</p>
+          <p class="rail__sub">Drop anything — he’ll catch it. Bench is private, LAN-only, nothing leaves this room.</p>
+        </div>
+        <div class="rail__meta">
+          <span class="rail__dot" aria-hidden="true"></span>
+          <span>waiting for drops</span>
+        </div>
+      </div>
+    </aside>
+
+    <section class="feed" aria-label="Bucket items">
+      <div class="listhead">
+        <h2 class="listhead__title" id="count">No items</h2>
+        <span class="listhead__sub">newest first</span>
+        <button class="btn btn--quiet" id="clear" type="button" hidden>Clear all</button>
+      </div>
+
+      <ul class="items" id="items"></ul>
+
+      <div class="empty" id="empty">
+        <p class="empty__title">All clear</p>
+        <p class="empty__sub">Paste anything, or drop a file anywhere — it lands on the other device in a second.</p>
+        <span class="empty__hint">Tip: Win+Shift+S then Ctrl+V for screenshots</span>
+      </div>
+    </section>
+
+  </div>
+</main>
+{% else %}
+<main class="stack stack--gate">
+  <section class="gate">
+    <p class="gate__eyebrow">Private LAN drop box</p>
+    <h1 class="gate__title">Pair this device</h1>
+    <p class="gate__body">Enter the six-digit code shown in the Bucket terminal on your PC. Codes live for 2 minutes and work once.</p>
+    <form class="gate__form" id="pairForm">
+      <input id="code" inputmode="numeric" autocomplete="one-time-code"
+             pattern="[0-9]{6}" maxlength="6" placeholder="000000"
+             aria-label="Pairing code" required>
+      <button class="btn btn--solid" type="submit">Pair</button>
+    </form>
+    <p class="gate__error" id="pairError" role="alert" hidden></p>
+  </section>
+</main>
+{% endif %}
+
+<div class="veil" id="confirmVeil" hidden>
+  <div class="dialog" role="dialog" aria-modal="true"
+       aria-labelledby="confirmTitle" aria-describedby="confirmBody">
+    <div class="dialog__stripe" aria-hidden="true"></div>
+    <div class="dialog__body">
+      <h3 class="dialog__title" id="confirmTitle">Clear all items?</h3>
+      <p class="dialog__text" id="confirmBody">Delete every item in the bucket?
+      This cannot be undone.</p>
+    </div>
+    <div class="dialog__acts">
+      <button class="btn btn--quiet" id="confirmCancel" type="button">Cancel</button>
+      <button class="btn btn--danger" id="confirmOk" type="button">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<template id="tpl-item">
+  <li class="item">
+    <div class="item__meta">
+      <span class="item__kind chip"></span>
+      <span class="item__dot" aria-hidden="true">·</span>
+      <span class="item__size"></span>
+      <span class="item__dot" aria-hidden="true">·</span>
+      <time class="item__time"></time>
+      <span class="item__origin chip"></span>
+    </div>
+    <div class="item__body"></div>
+    <div class="item__acts">
+      <button class="btn btn--sm" data-act="copy" type="button">Copy</button>
+      <a class="btn btn--sm" data-act="save" download>Save</a>
+      <a class="btn btn--sm" data-act="open" target="_blank"
+         rel="noopener">Open</a>
+      <button class="btn btn--sm btn--quiet" data-act="del"
+              type="button">Delete</button>
+    </div>
+  </li>
+</template>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

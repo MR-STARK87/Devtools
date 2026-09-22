@@ -1,0 +1,123 @@
+/* Bucket — E ink mode
+   A standalone theme, loaded unconditionally but inert until <html> has
+   the "eink" class. Everything is scoped under html.eink, so the workbench
+   theme is never overwritten — this file only layers on top of it.
+
+   The look: flat grayscale surfaces, square corners, no shadows, no motion,
+   and a fine 4px dither grid for paper grain. E ink cannot do color, blur,
+   or smooth animation, so none of that survives here.
+
+   Removal: this file, plus the E-INK-MODE blocks in index.html and app.js,
+   is all of e ink mode. tools/remove_eink.py strips all three in one run. */
+
+/* Palette swap: every workbench variable becomes an ink-on-paper gray.
+   --signal and --hazard go monochrome too — an e-ink panel has one ink. */
+html.eink{
+  --ground:#E5E5E0;
+  --ground-2:#DBDBD5;
+  --surface:#F1F1EC;
+  --surface-2:#E8E8E2;
+  --surface-3:#DEDED8;
+  --ink:#17181A;
+  --muted:#5B5E64;
+  --faint:#898C93;
+  --line:#C7C7C0;
+  --line-strong:#A6A69E;
+  --signal:#17181A;
+  --signal-ink:#F1F1EC;
+  --signal-hover:#000000;
+  --hazard:#C9C9C1;
+  --hazard-ink:#17181A;
+  --radius-lg:2px;
+  --radius:2px;
+  --radius-sm:1px;
+}
+
+/* Paper grain: the workbench dot grid tightens into a 4px dither, like a
+   halftone screen sitting on the panel. */
+html.eink body{
+  background:
+    radial-gradient(circle at 1px 1px, rgba(23,24,26,0.11) 1px, transparent 0) 0 0 / 4px 4px,
+    var(--ground);
+}
+
+/* E ink physics: no transitions, no animations, no shadows, no blur, no
+   rounded anything. A redraw is a full-panel refresh — instant and boxy. */
+html.eink *,
+html.eink *::before,
+html.eink *::after{
+  transition:none !important;
+  animation:none !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  border-radius:2px !important;
+}
+
+/* The header was frosted glass; e-ink gives it a flat solid fill. */
+html.eink .strip{background:var(--surface)}
+
+/* Hardcoded signal-color accents the variable swap cannot reach. Focus and
+   live states keep their meaning in ink weight instead of hue. */
+html.eink .composer textarea:focus{
+  border-color:var(--ink);
+  background-color:var(--surface);
+}
+html.eink .conn[data-state="live"]{
+  border-color:var(--line-strong);
+  background:var(--surface-2);
+}
+html.eink .conn[data-state="live"] i{
+  background:var(--ink);
+  border-color:var(--ink);
+}
+html.eink .item[data-origin="phone"] .item__origin{
+  border-color:var(--line-strong);
+  color:var(--ink);
+  background:var(--surface-2);
+}
+html.eink .item[data-origin="phone"]::after{background:var(--ink)}
+html.eink .item__more{background:var(--surface-2)}
+
+/* Drag-state hazard stripes re-inked as a plain gray hatch. */
+html.eink body.dragging .composer,
+html.eink body.dragging .composer textarea{border-color:var(--line-strong)}
+html.eink body.dragging .composer textarea{
+  background:
+    repeating-linear-gradient(-45deg, rgba(23,24,26,0.10) 0 6px, transparent 6px 12px),
+    var(--surface-2);
+}
+
+/* The send button loses its disc silhouette along with the rounded corners;
+   an outlined square button reads more at home on a panel. */
+html.eink .send{
+  border:1.5px solid var(--ink);
+  background:var(--surface);
+  color:var(--ink);
+}
+html.eink .send:hover{background:var(--ink);color:var(--surface)}
+
+/* The composer's hairline gradient ring flattens to nothing (it relied on
+   a near-invisible white-to-black gradient for depth). */
+html.eink .composer::before{display:none}
+
+/* Images and Bucky himself render as grayscale with a touch of contrast —
+   the panel has no color subpixels to offer them. */
+html.eink img{filter:grayscale(1) contrast(1.06)}
+html.eink .rail__mascot-art{filter:grayscale(1) contrast(1.08)}
+
+/* The toggle itself: an "e ink" button styled like the other quiet buttons,
+   but it flips to solid ink when the mode is on so its state is legible in
+   the same monochrome vocabulary as everything else. */
+#einkToggle{
+  font-family:var(--font-mono);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  font-size:11px;
+}
+html.eink #einkToggle{
+  background:var(--ink);
+  border-color:var(--ink);
+  color:var(--surface);
+}

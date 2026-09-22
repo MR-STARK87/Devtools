@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0B0B0C">
+<title>Bucket</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="strip">
+  <span class="mark"><i class="mark__glyph" aria-hidden="true">b</i>ucket</span>
+</header>
+<main class="stack">
+  <section class="gate">
+    <p class="gate__eyebrow">Private LAN drop box</p>
+    {% if ok %}
+    <h1 class="gate__title">Paired</h1>
+    <p class="gate__body">This device can now reach the bucket.</p>
+    {% else %}
+    <h1 class="gate__title">That code expired</h1>
+    <p class="gate__body">Pairing codes last two minutes and work once.
+      Generate a fresh one in the Bucket terminal window on your PC, then
+      scan again.</p>
+    {% endif %}
+    <a class="btn btn--solid" href="/">Open bucket</a>
+  </section>
+</main>
+</body>
+</html>

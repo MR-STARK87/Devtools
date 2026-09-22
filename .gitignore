@@ -1,0 +1,35 @@
+# ---- Secrets ----
+# .env holds the live OLLAMA_API_KEY. Never commit it; .env.example is the template.
+.env
+.env.local
+
+# ---- Python ----
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# ---- Runtime state (live databases, blobs, logs - not source) ----
+data/
+data_*/
+dictate-data/
+dictate-data-*/
+server.log
+*.log
+
+# ---- Android build artifacts (regenerate with build_apk.ps1) ----
+android/build/
+android-dictate/build/
+*.apk
+*.apk.idsig
+*.dex
+*.class
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*.swp
